@@ -3,10 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Upload Audio</title>
 </head>
 <body>
-    <h1>Welcome to Page index!</h1><button id="apiCall">Make API Call</button>
-    <script src="/client.js"></script>
+    <h1>Upload Audio and Sentence</h1>
+    <form id="uploadForm" action="http://localhost:3000/api/save" method="POST" enctype="multipart/form-data">
+        <label for="audio">Select Audio:</label>
+        <input type="file" id="audio" name="audio" accept="audio/*" required>
+        <br><br>
+        <label for="sentence">Enter Sentence:</label>
+        <textarea id="sentence" name="sentence" rows="4" cols="50" required></textarea>
+        <br><br>
+        <button type="submit">Upload</button>
+    </form>
+
+    <script>
+        // Optional: Add any client-side validation or JS here if needed
+    </script>
 </body>
 </html>
