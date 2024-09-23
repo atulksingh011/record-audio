@@ -19,8 +19,7 @@ app.use(cookieParser(CONSTANTS.SECRET_KEY));
 app.use(bodyParser.json());
 
 app.use("/api/validate-password", validateRouter);
-// app.use("/api", apiAuthentication, apiRouter);
-app.use("/api", apiRouter);
+app.use("/api", apiAuthentication, apiRouter);
 app.use("/", publicRouter);
 
 initializeDatabase()
