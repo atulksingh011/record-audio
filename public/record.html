@@ -67,12 +67,32 @@
         style="display: none"
       ></audio>
       <div id="transcribe-section" style="display: none">
+        <hr />
         <button class="btn btn-info mb-3" id="transcribe-button" disabled>
-          Transcribe <i id="transcribe-duration"></i>
+          Transcribe using Whisper-large model <i id="transcribe-duration"></i>
         </button>
         <div
           class="spinner-border text-primary d-none"
           id="transcribe-button-spinner"
+          role="status"
+        >
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5>Transcribed Text (for Whisper-large model):</h5>
+        <input
+          type="text"
+          id="transcribed-text-whisper-lg"
+          class="form-control mb-3"
+          disabled
+        />
+        <hr />
+        <button class="btn btn-info mb-3" id="transcribe-button-v2" disabled>
+          Transcribe using Fine-tuned Whisper-base model
+          <i id="transcribe-duration-v2"></i>
+        </button>
+        <div
+          class="spinner-border text-primary d-none"
+          id="transcribe-button-v2-spinner"
           role="status"
         >
           <span class="visually-hidden">Loading...</span>
@@ -84,6 +104,7 @@
           rows="3"
           disabled
         ></textarea>
+        <hr />
         <button class="btn btn-success" id="submit-button" disabled>
           Submit
         </button>
@@ -116,6 +137,9 @@
         .getElementById("transcribe-button")
         .addEventListener("click", transcribeAudio);
       document
+        .getElementById("transcribe-button-v2")
+        .addEventListener("click", transcribeAudioV2);
+      document
         .getElementById("submit-button")
         .addEventListener("click", submitAudio);
 
@@ -138,6 +162,7 @@
           document.getElementById("audio-player").style.display = "block";
           document.getElementById("transcribe-section").style.display = "block";
           document.getElementById("transcribe-button").disabled = false;
+          document.getElementById("transcribe-button-v2").disabled = false;
           document.getElementById("delete-button").disabled = false;
           document.getElementById("stop-button").disabled = true;
         };
@@ -157,6 +182,7 @@
         document.getElementById("record-button").disabled = false;
         setTimeout(() => {
           document.getElementById("transcribe-button").click();
+          document.getElementById("transcribe-button-v2").click();
         });
       }
 
@@ -168,6 +194,7 @@
         document.getElementById("transcribed-text").value = "";
         document.getElementById("transcribed-text").disabled = true;
         document.getElementById("transcribe-button").disabled = true;
+        document.getElementById("transcribe-button-v2").disabled = true;
         document.getElementById("submit-button").disabled = true;
         document.getElementById("transcribe-section").style.display = "none";
         document.getElementById("delete-button").disabled = true;
@@ -176,15 +203,15 @@
       async function transcribeAudio() {
         if (!audioUrl) return;
         const spinnerEl = document.getElementById("transcribe-button-spinner");
-        
+
         // Prevent multiple clicks
         document.getElementById("transcribe-button").disabled = true;
-        
+
         const startTime = performance.now();
         const audioBlob = await fetch(audioUrl).then((r) => r.blob());
         const formData = new FormData();
         formData.append("file", audioBlob, "recording.wav");
-        
+
         spinnerEl.classList.remove("d-none");
         document.getElementById("transcribe-duration").innerText = "";
 
@@ -194,7 +221,6 @@
         })
           .then((response) => response.json())
           .then((data) => {
-            spinnerEl.classList.add("d-none");
             const endTime = performance.now(); // End timing
             const durationInSeconds = ((endTime - startTime) / 1000).toFixed(2); // Duration in seconds
 
@@ -202,13 +228,54 @@
             document.getElementById(
               "transcribe-duration"
             ).innerText = `(it took ${durationInSeconds}s)`;
+            document.getElementById("transcribed-text-whisper-lg").value = data.text || "";
+            
+          })
+          .catch((error) => console.error("Error transcribing audio:", error))
+          .finally(() => {
+            document.getElementById("transcribe-button").disabled = false; // Re-enable the button
+            spinnerEl.classList.add("d-none");
+          });
+      }
+
+      async function transcribeAudioV2() {
+        if (!audioUrl) return;
+        const spinnerEl = document.getElementById(
+          "transcribe-button-v2-spinner"
+        );
+
+        // Prevent multiple clicks
+        document.getElementById("transcribe-button-v2").disabled = true;
+
+        const startTime = performance.now();
+        const audioBlob = await fetch(audioUrl).then((r) => r.blob());
+        const formData = new FormData();
+        formData.append("file", audioBlob, "recording.wav");
+
+        spinnerEl.classList.remove("d-none");
+        document.getElementById("transcribe-duration").innerText = "";
+
+        fetch("/api/transcribe/ft-base", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const endTime = performance.now(); // End timing
+            const durationInSeconds = ((endTime - startTime) / 1000).toFixed(2); // Duration in seconds
+
+            // Display the duration
+            document.getElementById(
+              "transcribe-duration-v2"
+            ).innerText = `(it took ${durationInSeconds}s)`;
             document.getElementById("transcribed-text").value = data.text || "";
             document.getElementById("transcribed-text").disabled = false;
             document.getElementById("submit-button").disabled = false;
           })
           .catch((error) => console.error("Error transcribing audio:", error))
           .finally(() => {
-            document.getElementById("transcribe-button").disabled = false; // Re-enable the button
+            document.getElementById("transcribe-button-v2").disabled = false; // Re-enable the button
+            spinnerEl.classList.add("d-none");
           });
       }
 

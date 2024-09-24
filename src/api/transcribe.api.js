@@ -45,8 +45,8 @@ transcribeRouter.post("/", upload.single("file"), async (req, res) => {
 });
 
 if(process.env.MULTI_TRANSCRIBE === "TRUE") {
-  const FT_BASE_API = process.env.TRANSCRIBE_API.split(":")[0] + ":5003";
-  
+  const FT_BASE_API = process.env.TRANSCRIBE_API.replace("5001", "5003");
+
   transcribeRouter.post("/ft-base", upload.single("file"), async (req, res) => {
     const audioFilePath = req.file.path; // Get the uploaded file path
   
