@@ -1,24 +1,263 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Audio</title>
-</head>
-<body>
-    <h1>Upload Audio and Sentence</h1>
-    <form id="uploadForm" action="http://localhost:3000/api/save" method="POST" enctype="multipart/form-data">
-        <label for="audio">Select Audio:</label>
-        <input type="file" id="audio" name="audio" accept="audio/*" required>
-        <br><br>
-        <label for="sentence">Enter Sentence:</label>
-        <textarea id="sentence" name="sentence" rows="4" cols="50" required></textarea>
-        <br><br>
-        <button type="submit">Upload</button>
-    </form>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audio Records</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        padding: 30px;
+        background-color: #f8f9fa;
+      }
+      .tabs {
+        margin-bottom: 20px;
+      }
+      h3 {
+        margin-bottom: 20px;
+      }
+      .audio-controls {
+        margin-bottom: 20px;
+      }
+      .audio-player {
+        margin-top: 20px;
+        display: none;
+      }
+      .transcribe-section {
+        margin-top: 20px;
+        display: none;
+      }
+      .btn {
+        margin-right: 10px;
+      }
+      textarea {
+        resize: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <ul class="nav nav-tabs tabs" id="tabs">
+        <li class="nav-item">
+          <a class="nav-link active" href="/">View Records</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/record">Record Audio</a>
+        </li>
+      </ul>
+
+      <div id="records-section">
+        <h3>Audio Records</h3>
+        <div class="d-flex justify-content-between mb-3">
+          <p id="total-count"></p>
+          <button
+            class="btn btn-warning"
+            onclick="history.replaceState(null, '', `?page=${1}`); window.location.reload()"
+          >
+            Reset
+          </button>
+        </div>
+        <div class="table-responsive table-container">
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Sentence</th>
+                <th>Audio</th>
+                <th>Delete</th>
+              </tr>
+            </thead>
+            <tbody id="records-table-body" class="align-middle">
+              <!-- Records will be injected here -->
+            </tbody>
+          </table>
+        </div>
+
+        <nav>
+          <ul class="pagination">
+            <li class="page-item" id="prev-page">
+              <a class="page-link" href="#" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <!-- Pagination numbers will be injected here -->
+            <li class="page-item" id="next-page">
+              <a class="page-link" href="#" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
 
     <script>
-        // Optional: Add any client-side validation or JS here if needed
+      document.addEventListener("DOMContentLoaded", function () {
+        let currentPage = getCurrentPageFromUrl() || 1;
+        const recordsPerPage = 10; // Adjust as needed
+        const maxPagesToShow = 3; // Set to 5 as per your requirement
+
+        // Fetch initial records
+        fetchRecords(currentPage);
+
+        window.changePage = function (page) {
+          currentPage = page;
+          fetchRecords(currentPage);
+        };
+
+        window.confirmDelete = function (id) {
+          const confirmation = confirm(
+            "Are you sure you want to delete this record?"
+          );
+          if (confirmation) {
+            deleteRecord(id);
+          }
+        };
+
+        function getCurrentPageFromUrl() {
+          const params = new URLSearchParams(window.location.search);
+          return params.get("page") ? parseInt(params.get("page"), 10) : null; // Return page number if it exists
+        }
+
+        function fetchRecords(page = 1) {
+          fetch(`/api/list?pageNo=${page}&limit=${recordsPerPage}`)
+            .then((response) => response.json())
+            .then((data) => {
+              updateTable(data);
+              updatePagination(data);
+              // Update the URL with the current page
+              history.replaceState(null, "", `?page=${page}`); // Update the URL without reloading
+            })
+            .catch((error) => console.error("Error fetching records:", error));
+        }
+
+        function updateTable(data) {
+          const tbody = document.getElementById("records-table-body");
+          tbody.innerHTML = "";
+
+          data.records.forEach((record, index) => {
+            const sno = (currentPage - 1) * recordsPerPage + (index + 1);
+            const row = `
+            <tr>
+                <td>${sno}</td>
+                <td>${record.sentence}</td>
+                <td><audio controls><source src="${record.signedUrl}" type="audio/wav"></audio></td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="confirmDelete('${record._id}')">
+                        Remove
+                    </button>
+                </td>
+            </tr>
+          `;
+            tbody.innerHTML += row;
+          });
+
+          document.getElementById(
+            "total-count"
+          ).textContent = `Total Records: ${data.totalRecords}`;
+        }
+
+        function updatePagination(data) {
+          const pagination = document.querySelector(".pagination");
+          const totalPages = data.totalPages;
+          const currentPage = data.currentPage;
+
+          pagination.innerHTML = "";
+
+          // Add previous button
+          pagination.innerHTML += `
+            <li class="page-item ${currentPage === 1 ? "disabled" : ""}">
+                <a class="page-link" href="#" aria-label="Previous" onclick="changePage(${
+                  currentPage - 1
+                })">&laquo;</a>
+            </li>
+            `;
+
+          let startPage, endPage;
+
+          if (totalPages <= maxPagesToShow) {
+            // Show all pages if total pages less than or equal to maxPagesToShow
+            startPage = 1;
+            endPage = totalPages;
+          } else if (currentPage <= Math.ceil(maxPagesToShow / 2)) {
+            // Close to the start
+            startPage = 1;
+            endPage = maxPagesToShow;
+          } else if (
+            currentPage + Math.floor(maxPagesToShow / 2) >=
+            totalPages
+          ) {
+            // Close to the end
+            startPage = totalPages - maxPagesToShow + 1;
+            endPage = totalPages;
+          } else {
+            // Somewhere in the middle
+            startPage = currentPage - Math.floor(maxPagesToShow / 2);
+            endPage = currentPage + Math.floor(maxPagesToShow / 2);
+          }
+
+          // If startPage > 1, show 1 and ellipsis
+          if (startPage > 1) {
+            pagination.innerHTML += `
+                <li class="page-item">
+                <a class="page-link" href="#" onclick="changePage(1)">1</a>
+                </li>
+                <li class="page-item disabled"><a class="page-link">...</a></li>
+            `;
+          }
+
+          // Loop through the page numbers
+          for (let i = startPage; i <= endPage; i++) {
+            pagination.innerHTML += `
+                <li class="page-item ${i === currentPage ? "active" : ""}">
+                <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                </li>
+            `;
+          }
+
+          // If endPage < totalPages, show ellipsis and the last page
+          if (endPage < totalPages) {
+            pagination.innerHTML += `
+                <li class="page-item disabled"><a class="page-link">...</a></li>
+                <li class="page-item">
+                <a class="page-link" href="#" onclick="changePage(${totalPages})">${totalPages}</a>
+                </li>
+            `;
+          }
+
+          // Add next button
+          pagination.innerHTML += `
+            <li class="page-item ${
+              currentPage === totalPages ? "disabled" : ""
+            }">
+                <a class="page-link" href="#" aria-label="Next" onclick="changePage(${
+                  currentPage + 1
+                })">&raquo;</a>
+            </li>
+            `;
+        }
+
+        function deleteRecord(id) {
+          fetch(`/api/delete?id=${id}`, {
+            method: "DELETE",
+          })
+            .then(({ status }) => {
+              if (status === 200) {
+                alert("Record deleted successfully.");
+                fetchRecords(currentPage); // Refresh the records after deletion
+              } else {
+                alert("Error deleting record.");
+              }
+            })
+            .catch((error) => {
+              console.error("Error deleting record:", error);
+              alert("Failed to delete the record.");
+            });
+        }
+      });
     </script>
-</body>
+  </body>
 </html>

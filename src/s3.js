@@ -66,7 +66,7 @@ exports.generatePresignedUrl = async (audioKey) => {
 
     try {
         const command = new GetObjectCommand(params);
-        const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour
+        const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 }); // 5 minutes
         return signedUrl;
     } catch (error) {
         console.error('Error generating signed URL:', error);

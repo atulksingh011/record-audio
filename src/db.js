@@ -20,7 +20,7 @@ exports.initializeDatabase = async () => {
 }
 
 exports.startPeriodicUpload  = () => {
-    setInterval(uploadDbToS3, 2 * 60 * 1000); // 5 minutes in milliseconds
+    setInterval(uploadDbToS3, 2 * 60 * 1000); // 2 minutes in milliseconds
 }
 
 // Function to get paginated records

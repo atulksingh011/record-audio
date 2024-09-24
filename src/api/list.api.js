@@ -6,7 +6,7 @@ const listRouter = require("express").Router();
 // List API
 listRouter.get('/', async (req, res) => {
     const pageNo = parseInt(req.query.pageNo, 10) || 1; // Default to page 1
-    const limit = 20; // Number of records per page
+    const limit = parseInt(req.query.limit, 10) || 20; // Number of records per page
 
     try {
         const totalRecords = await getTotalCount();
