@@ -34,13 +34,20 @@ saveRouter.post("/", upload.single("audio"), async (req, res) => {
     await s3Client.send(new PutObjectCommand(uploadParams));
 
     // Save the record to NeDB
-    getDB().insert({ sentence: sentence, audioKey: s3Key }, (err, newDoc) => {
-      if (err) {
-        return res.status(500).send("Failed to save record to the database.");
-      }
+    getDB().insert(
+      {
+        sentence: sentence,
+        audioKey: s3Key,
+        createdAt: new Date(),
+      },
+      (err, newDoc) => {
+        if (err) {
+          return res.status(500).send("Failed to save record to the database.");
+        }
 
-      return res.status(200).send("Record saved successfully.");
-    });
+        return res.status(200).send("Record saved successfully.");
+      }
+    );
   } catch (error) {
     console.error("Error uploading file:", error);
     res.status(500).send("Failed to upload audio to S3.");

@@ -27,7 +27,7 @@ exports.startPeriodicUpload  = () => {
 exports.getPaginatedRecords = (pageNo, limit) => {
     return new Promise((resolve, reject) => {
         db.find({})
-            .sort({ _id: -1 }) // Sort by descending order
+            .sort({ createdAt: -1 }) // Sort by descending order
             .skip((pageNo - 1) * limit)
             .limit(limit)
             .exec((err, docs) => {

@@ -60,11 +60,23 @@
         </button>
       </div>
 
-      <audio id="audio-player" class="mb-3" controls style="display: none"></audio>
+      <audio
+        id="audio-player"
+        class="mb-3"
+        controls
+        style="display: none"
+      ></audio>
       <div id="transcribe-section" style="display: none">
         <button class="btn btn-info mb-3" id="transcribe-button" disabled>
-          Transcribe
+          Transcribe <i id="transcribe-duration"></i>
         </button>
+        <div
+          class="spinner-border text-primary d-none"
+          id="transcribe-button-spinner"
+          role="status"
+        >
+          <span class="visually-hidden">Loading...</span>
+        </div>
         <h5>Transcribed Text:</h5>
         <textarea
           id="transcribed-text"
@@ -75,6 +87,13 @@
         <button class="btn btn-success" id="submit-button" disabled>
           Submit
         </button>
+        <div
+          class="spinner-border text-primary d-none"
+          id="submit-button-spinner"
+          role="status"
+        >
+          <span class="visually-hidden">Loading...</span>
+        </div>
       </div>
     </div>
 
@@ -82,6 +101,7 @@
       let mediaRecorder;
       let audioChunks = [];
       let audioUrl;
+      let timer;
 
       document
         .getElementById("record-button")
@@ -125,15 +145,19 @@
         document.getElementById("stop-button").disabled = false;
         document.getElementById("record-button").disabled = true;
 
-        setTimeout(() => {
+        timer = setTimeout(() => {
           stopRecording();
         }, 30000); // Stop recording after 30 seconds
       }
 
       function stopRecording() {
+        clearTimeout(timer);
         mediaRecorder.stop();
         document.getElementById("stop-button").disabled = true;
         document.getElementById("record-button").disabled = false;
+        setTimeout(() => {
+          document.getElementById("transcribe-button").click();
+        });
       }
 
       function deleteRecording() {
@@ -151,13 +175,18 @@
 
       async function transcribeAudio() {
         if (!audioUrl) return;
-
+        const spinnerEl = document.getElementById("transcribe-button-spinner");
+        
         // Prevent multiple clicks
         document.getElementById("transcribe-button").disabled = true;
-
+        
+        const startTime = performance.now();
         const audioBlob = await fetch(audioUrl).then((r) => r.blob());
         const formData = new FormData();
         formData.append("file", audioBlob, "recording.wav");
+        
+        spinnerEl.classList.remove("d-none");
+        document.getElementById("transcribe-duration").innerText = "";
 
         fetch("http://localhost:3000/api/transcribe", {
           method: "POST",
@@ -165,6 +194,14 @@
         })
           .then((response) => response.json())
           .then((data) => {
+            spinnerEl.classList.add("d-none");
+            const endTime = performance.now(); // End timing
+            const durationInSeconds = ((endTime - startTime) / 1000).toFixed(2); // Duration in seconds
+
+            // Display the duration
+            document.getElementById(
+              "transcribe-duration"
+            ).innerText = `(it took ${durationInSeconds}s)`;
             document.getElementById("transcribed-text").value = data.text || "";
             document.getElementById("transcribed-text").disabled = false;
             document.getElementById("submit-button").disabled = false;
@@ -177,6 +214,7 @@
 
       function submitAudio() {
         const text = document.getElementById("transcribed-text").value;
+        const spinnerEl = document.getElementById("submit-button-spinner");
 
         // Prevent multiple clicks
         document.getElementById("submit-button").disabled = true;
@@ -186,11 +224,13 @@
         formData.append("audio", audioBlob, "recording.wav");
         formData.append("sentence", text);
 
+        spinnerEl.classList.remove("d-none");
         fetch("http://localhost:3000/api/save", {
           method: "POST",
           body: formData,
         })
           .then((data) => {
+            spinnerEl.classList.add("d-none");
             // Handle success (e.g., show a message, redirect, etc.)
             alert("Audio and transcription saved successfully!");
             deleteRecording(); // Reset the form after successful save
