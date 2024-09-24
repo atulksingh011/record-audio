@@ -188,7 +188,7 @@
         spinnerEl.classList.remove("d-none");
         document.getElementById("transcribe-duration").innerText = "";
 
-        fetch("http://localhost:3000/api/transcribe", {
+        fetch("/api/transcribe", {
           method: "POST",
           body: formData,
         })
@@ -225,7 +225,7 @@
         formData.append("sentence", text);
 
         spinnerEl.classList.remove("d-none");
-        fetch("http://localhost:3000/api/save", {
+        fetch("/api/save", {
           method: "POST",
           body: formData,
         })

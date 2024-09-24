@@ -28,7 +28,7 @@ initializeDatabase()
 
     // Start the server
     app.listen(CONSTANTS.PORT, () => {
-      console.log(`Server running on http://localhost:${CONSTANTS.PORT}`);
+      console.log(`Server running on port ${CONSTANTS.PORT}`);
     });
   })
   .catch((error) => {
