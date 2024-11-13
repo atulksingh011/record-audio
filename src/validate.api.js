@@ -3,12 +3,14 @@ const validateRouter = require("express").Router();
 const crypto = require("crypto");
 const CONSTANTS = require("./constants");
 
+const users = process.env.USERS;
 
 // POST route for validating password
 validateRouter.post("/", (req, res) => {
   const { password } = req.body;
+  const user = password.toLowerCase();
 
-  if (password === CONSTANTS.PASSWORD) {
+  if (users.indexOf(user) !== -1) {
     const token = generateToken();
     const expirationTime = Date.now() + CONSTANTS.TOKEN_EXPIRATION;
 
@@ -17,14 +19,21 @@ validateRouter.post("/", (req, res) => {
       signed: true,
       httpOnly: true,
       maxAge: CONSTANTS.TOKEN_EXPIRATION,
-      secure: isProd(), // Uncomment this when using HTTPS
+      secure: isProd(),
     });
 
     res.cookie("token_expiration", expirationTime, {
       signed: true,
       httpOnly: true,
       maxAge: CONSTANTS.TOKEN_EXPIRATION,
-      secure: isProd(), // Uncomment this when using HTTPS
+      secure: isProd(),
+    });
+
+    res.cookie("user", user, {
+      signed: true,
+      httpOnly: true,
+      maxAge: CONSTANTS.TOKEN_EXPIRATION,
+      secure: isProd(),
     });
 
     return res.status(200).send("Password validated");

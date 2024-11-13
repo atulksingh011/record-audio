@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker container logs --tail 100 -f record-audio
+docker container logs --tail 100 -f record-names

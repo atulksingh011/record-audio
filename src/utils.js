@@ -1,6 +1,6 @@
+const fs = require("fs");
 const path = require("path");
 const CONSTANTS = require("./constants");
-const exp = require("constants");
 
 // Validate the token expiration (server-side)
 exports.isValidToken = isValidToken;
@@ -26,7 +26,7 @@ exports.generateAudioFileName = (originalName) => {
   return `${baseName}_${timestamp}${extension}`;
 };
 
-exports.getDbFilePath = () => path.join(__dirname, "../", CONSTANTS.DB_FILE_NAME);
+exports.getDbFilePath = () => path.join(__dirname, "../data");
 
 exports.runSequentially = (tasks) => {
   return tasks.reduce((promiseChain, currentTask) => {

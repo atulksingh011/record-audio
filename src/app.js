@@ -11,7 +11,7 @@ const validateRouter = require("./validate.api");
 const apiRouter = require("./api");
 const { apiAuthentication, runSequentially } = require("./utils");
 const CONSTANTS = require("./constants");
-const { initializeDatabase, startPeriodicUpload } = require("./db");
+const { initializeDatabase, startPeriodicUpload, initializeUsers } = require("./db");
 const app = express();
 
 // Middleware
@@ -22,13 +22,13 @@ app.use("/api/validate-password", validateRouter);
 app.use("/api", apiAuthentication, apiRouter);
 app.use("/", publicRouter);
 
-runSequentially([initializeDatabase])
+runSequentially([initializeDatabase, initializeUsers])
   .then(() => {
     startPeriodicUpload();
 
     // Start the server
-    app.listen(CONSTANTS.PORT, () => {
-      console.log(`Server running on port ${CONSTANTS.PORT}`);
+    app.listen(process.env.PORT, () => {
+      console.log(`Server running on port ${process.env.PORT}`);
     });
   })
   .catch((error) => {

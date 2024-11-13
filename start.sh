@@ -11,13 +11,13 @@ fi
 docker container run \
     -d \
     --rm \
-    --name record-audio \
+    --name record-names \
     $ENV_FILE_OPTION \
-    -p 3000:3000 \
+    -p 3010:3000 \
     -v $(pwd)/.env:/app/.env \
     -v $(pwd)/public:/app/public \
     -v $(pwd)/src:/app/src \
     -v $(pwd)/package.json:/app/package.json \
     -v $(pwd)/nodemon.json:/app/nodemon.json \
-    record-audio:latest \
+    record-names:latest \
     "$@"

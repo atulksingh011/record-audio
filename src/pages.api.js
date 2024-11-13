@@ -8,10 +8,6 @@ const publicDir = path.join(__dirname, "../", "public");
 publicRouter.use(promptForPassword);
 publicRouter.use(express.static(publicDir));
 
-publicRouter.get("/", (req, res) => {
-  return res.sendFile(path.join(publicDir, "index.html"));
-});
-
 publicRouter.get("/record", (req, res) => {
   return res.sendFile(path.join(publicDir, "record.html"));
 });

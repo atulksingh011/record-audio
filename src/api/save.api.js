@@ -29,6 +29,7 @@ saveRouter.post("/", upload.single("audio"), async (req, res) => {
       Key: s3Key,
       Body: fileStream,
       ContentType: audioFile.mimetype,
+      Prefix: "record-names"
     };
 
     await s3Client.send(new PutObjectCommand(uploadParams));
