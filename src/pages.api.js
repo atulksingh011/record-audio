@@ -12,6 +12,10 @@ publicRouter.get("/record", (req, res) => {
   return res.sendFile(path.join(publicDir, "record.html"));
 });
 
+publicRouter.get("/share", (req, res) => {
+  return res.sendFile(path.join(publicDir, "share.html"));
+});
+
 module.exports = publicRouter;
 
 // Middleware for page rendering (password protection)

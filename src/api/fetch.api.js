@@ -1,9 +1,9 @@
-const recordRouter = require("express").Router();
+const fetchRouter = require("express").Router();
 const namesToRecord = require("../../namesToRecord.json");
-const { getDB } = require("../db");
+const { getRecordIndex } = require("../users");
 
 // Fetch Text to record API
-recordRouter.get('/fetch-text-to-record', async (req, res) => {
+fetchRouter.get('/', async (req, res) => {
     try {
         // Check if user information exists in signed cookies
         const userName = req.signedCookies.user;
@@ -11,32 +11,22 @@ recordRouter.get('/fetch-text-to-record', async (req, res) => {
             return res.status(400).json({ error: 'User not authenticated' });
         }
 
-        // Fetch the user from the database by name
-        const user = await new Promise((resolve, reject) => {
-            getDB().usersDB.findOne({ name: userName }, (err, doc) => {
-                if (err) reject(err);
-                else resolve(doc);
-            });
-        });
-
-        // If user not found, return an error
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
         // Get the index from the user record
-        const { index } = user;
+        const index = await getRecordIndex(userName);
 
         // Check if index exists in the JSON data
         if (index < 0 || index >= namesToRecord.length) {
             return res.status(400).json({ error: 'Invalid index in user data' });
         }
 
-        const name = namesToRecord[index];
+        const name = namesToRecord[index]?.name;
         
         // Respond with the name
         if (name) {
-            return res.json(name);
+            return res.json({
+                name,
+                index
+            });
         } else {
             return res.status(400).json({ error: 'Name not found at specified index' });
         }
@@ -47,4 +37,4 @@ recordRouter.get('/fetch-text-to-record', async (req, res) => {
     }
 });
 
-module.exports = recordRouter;
+module.exports = fetchRouter;

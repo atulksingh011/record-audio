@@ -7,18 +7,25 @@ const listRouter = require("express").Router();
 listRouter.get('/', async (req, res) => {
     const pageNo = parseInt(req.query.pageNo, 10) || 1; // Default to page 1
     const limit = parseInt(req.query.limit, 10) || 20; // Number of records per page
+    const userName = req.signedCookies.user;
 
     try {
-        const totalRecords = await getTotalCount();
+        const totalRecords = await getTotalCount(userName);
         const totalPages = Math.ceil(totalRecords / limit);
 
-        const records = await getPaginatedRecords(pageNo, limit);
+        const records = await getPaginatedRecords(userName, pageNo, limit);
 
-        // Generate signed URLs for audio files
+        // Generate signed URLs for English and Hindi audio files
         const signedRecords = await Promise.all(
             records.map(async (record) => {
-                const signedUrl = await generatePresignedUrl(record.audioKey);
-                return { ...record, signedUrl };
+                const english = await generatePresignedUrl(record.english);
+                const hindi = await generatePresignedUrl(record.hindi);
+                
+                return { 
+                    ...record, 
+                    english,
+                    hindi
+                };
             })
         );
 

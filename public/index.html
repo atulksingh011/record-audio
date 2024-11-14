@@ -65,8 +65,10 @@
             <thead>
               <tr>
                 <th>#</th>
-                <th>Sentence</th>
-                <th>Audio</th>
+                <th>Names</th>
+                <th>English</th>
+                <th>Hindi</th>
+                <th>Created By</th>
                 <th>Delete</th>
               </tr>
             </thead>
@@ -143,8 +145,10 @@
             const row = `
             <tr>
                 <td>${sno}</td>
-                <td>${record.sentence}</td>
-                <td><audio controls><source src="${record.signedUrl}" type="audio/wav"></audio></td>
+                <td>${record.text}</td>
+                <td><audio controls><source src="${record.english}" type="audio/wav"></audio></td>
+                <td><audio controls><source src="${record.hindi}" type="audio/wav"></audio></td>
+                <td>${record.createdBy}</td>
                 <td>
                     <button class="btn btn-danger btn-sm" onclick="confirmDelete('${record._id}')">
                         Remove

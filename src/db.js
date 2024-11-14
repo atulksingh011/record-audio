@@ -43,7 +43,7 @@ exports.initializeUsers = async () => {
         const usersToCreate = process.env.USERS
             .split(',')
             .filter(name => !existingUsers.includes(name))
-            .map((name, index) => ({ name, index }));
+            .map((name, index) => ({ name, index: [0] }));
 
         // Insert the new user records if any are missing
         if (usersToCreate.length > 0) {
@@ -63,9 +63,9 @@ exports.initializeUsers = async () => {
 }
 
 // Function to get paginated records
-exports.getPaginatedRecords = (pageNo, limit) => {
+exports.getPaginatedRecords = (userName, pageNo, limit) => {
     return new Promise((resolve, reject) => {
-        recordDB.find({})
+        recordDB.find({ createdBy: userName })
             .sort({ createdAt: -1 }) // Sort by descending order
             .skip((pageNo - 1) * limit)
             .limit(limit)
@@ -79,9 +79,9 @@ exports.getPaginatedRecords = (pageNo, limit) => {
 };
 
 // Function to get total number of records
-exports.getTotalCount = () => {
+exports.getTotalCount = (userName) => {
     return new Promise((resolve, reject) => {
-        recordDB.count({}, (err, count) => {
+        recordDB.count({ createdBy: userName }, (err, count) => {
             if (err) {
                 return reject(err);
             }

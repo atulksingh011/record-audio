@@ -3,7 +3,7 @@ const Datastore = require("nedb");
 const path = require("path");
 
 // Adjust the path to your db file
-const dbFilePath = path.join(__dirname, "../", "records.db");
+const dbFilePath = path.join(__dirname, "../", "data/users.db");
 const db = new Datastore({ filename: dbFilePath, autoload: true });
 
 // db.insert(

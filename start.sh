@@ -19,5 +19,6 @@ docker container run \
     -v $(pwd)/src:/app/src \
     -v $(pwd)/package.json:/app/package.json \
     -v $(pwd)/nodemon.json:/app/nodemon.json \
+    -v $(pwd)/namesToRecord.json:/app/namesToRecord.json \
     record-names:latest \
     "$@"

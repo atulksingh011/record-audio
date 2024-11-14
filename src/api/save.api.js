@@ -5,53 +5,78 @@ const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const { generateAudioFileName } = require("../utils");
 const fs = require("fs");
 const { s3Client } = require("../s3");
+const CONSTANTS = require("../constants");
+const { incrementRecordIndex } = require("../users");
 
 // Configure multer for file uploads
 const upload = multer({ dest: "uploads/" });
 
-saveRouter.post("/", upload.single("audio"), async (req, res) => {
-  const audioFile = req.file;
-  const sentence = req.body.sentence;
+saveRouter.post("/", upload.fields([{ name: 'english' }, { name: 'hindi' }]), async (req, res) => {
+  const englishFile = req.files['english']?.[0];
+  const hindiFile = req.files['hindi']?.[0];
+  const text = req.body.text;
+  const index = Number(req.body.index);
 
-  if (!audioFile || !sentence) {
-    return res.status(400).send("Audio and sentence are required.");
+  if (!englishFile || !hindiFile || !text || isNaN(index)) {
+    return res.status(400).send("English and Hindi recordings, index and text are required.");
   }
 
   try {
-    // Generate a unique audio file name
-    const uniqueFileName = generateAudioFileName(audioFile.originalname);
-    const s3Key = `audio/${uniqueFileName}`; // Use the unique name for S3
+    // Define paths for S3 storage within `record-names/recording/`
+    const englishFileName = generateAudioFileName(englishFile.originalname);
+    const hindiFileName = generateAudioFileName(hindiFile.originalname);
+    const englishS3Key = `${CONSTANTS.RECORDING_STORAGE_PATH}/english/${englishFileName}`;
+    const hindiS3Key = `${CONSTANTS.RECORDING_STORAGE_PATH}/hindi/${hindiFileName}`;
+    const userName = req.signedCookies.user;
 
-    // Upload audio file to S3
-    const fileStream = fs.createReadStream(audioFile.path);
-    const uploadParams = {
+    // Upload English recording to S3
+    await s3Client.send(new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
-      Key: s3Key,
-      Body: fileStream,
-      ContentType: audioFile.mimetype,
-      Prefix: "record-names"
-    };
+      Key: englishS3Key,
+      Body: fs.createReadStream(englishFile.path),
+      ContentType: englishFile.mimetype,
+    }));
 
-    await s3Client.send(new PutObjectCommand(uploadParams));
+    // Upload Hindi recording to S3
+    await s3Client.send(new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: hindiS3Key,
+      Body: fs.createReadStream(hindiFile.path),
+      ContentType: hindiFile.mimetype,
+    }));
 
     // Save the record to NeDB
-    getDB().insert(
+    getDB().recordDB.insert(
       {
-        sentence: sentence,
-        audioKey: s3Key,
+        text,
+        index,
+        english: englishS3Key,
+        hindi: hindiS3Key,
         createdAt: new Date(),
+        createdBy: userName,
       },
-      (err, newDoc) => {
+      async (err, newDoc) => {
         if (err) {
           return res.status(500).send("Failed to save record to the database.");
         }
 
-        return res.status(200).send("Record saved successfully.");
+        // Update the user's index if recording was saved successfully
+        try {
+          await incrementRecordIndex(userName, index);
+          res.status(200).send("Record saved and user index incremented successfully.");
+        } catch(e) {
+          console.error("Failed to increment user index:", err);
+          return res.status(500).send("Failed to update user index.");
+        }
       }
     );
   } catch (error) {
     console.error("Error uploading file:", error);
     res.status(500).send("Failed to upload audio to S3.");
+  } finally {
+    // Clean up temporary files
+    fs.unlinkSync(englishFile.path);
+    fs.unlinkSync(hindiFile.path);
   }
 });
 
