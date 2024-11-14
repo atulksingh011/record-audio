@@ -5,15 +5,15 @@ const CONSTANTS = require("./constants");
 const { isValidToken } = require("./utils");
 const publicDir = path.join(__dirname, "../", "public");
 
+publicRouter.get("/share", (req, res) => {
+  return res.sendFile(path.join(publicDir, "share.html"));
+});
+
 publicRouter.use(promptForPassword);
 publicRouter.use(express.static(publicDir));
 
 publicRouter.get("/record", (req, res) => {
   return res.sendFile(path.join(publicDir, "record.html"));
-});
-
-publicRouter.get("/share", (req, res) => {
-  return res.sendFile(path.join(publicDir, "share.html"));
 });
 
 module.exports = publicRouter;
