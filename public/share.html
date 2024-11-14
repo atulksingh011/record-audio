@@ -12,13 +12,14 @@
 </head>
 <body>
   <h2>PDF Viewer</h2>
-  <input type="text" id="pdfLink" placeholder="Enter PDF URL here..." />
+  <input type="text" id="pdfLink" placeholder="Enter PDF URL here..." value="https://account.mypin.ai/reports/soFormat_14-11-2024_06:25.pdf" />
   <button onclick="loadPDF()">Load PDF</button>
   
   <iframe id="pdfViewer" class="pdf-viewer" src="" hidden></iframe>
   
   <div class="controls">
-    <button id="shareButton" onclick="sharePDF()">Share</button>
+    <button id="shareButton" onclick="sharePDF()">Share Link</button>
+    <button id="shareButton" onclick="sharePDFFile()">Share as file</button>
     <button id="copyButton" onclick="copyToClipboard()">Copy Link</button>
   </div>
   
@@ -45,6 +46,28 @@
         // Fallback for non-supporting devices (social links, etc.)
         alert("Sharing not supported on this device. Copy the link manually.");
       }
+    }
+
+    async function sharePDFFile() {
+        const pdfLink = document.getElementById('pdfLink').value;
+        try {
+        const response = await fetch(pdfLink);
+        const blob = await response.blob();
+        const file = new File([blob], "shared.pdf", { type: "application/pdf" });
+        
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+            files: [file],
+            title: 'Shared PDF',
+            text: 'Here is the PDF file you requested',
+            })
+            .catch((error) => console.error('Error sharing file:', error));
+        } else {
+            alert("File sharing not supported on this device.");
+        }
+        } catch (error) {
+        console.error("Error fetching or sharing file:", error);
+        }
     }
 
     // Copy link to clipboard
