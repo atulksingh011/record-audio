@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Record Audio</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  
   <style>
     body {
       padding: 30px;
@@ -91,6 +92,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/recordrtc@5.6.2/RecordRTC.min.js"></script>
   <script>
     let englishRecorder, hindiRecorder;
     let englishBlob, hindiBlob;
@@ -150,75 +152,60 @@
 
     function startRecording(language) {
       navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-        let options;
-        // Check for supported audio MIME types
-        if (MediaRecorder.isTypeSupported('audio/webm')) {
-          options = { mimeType: 'audio/webm' };
-        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-          options = { mimeType: 'audio/mp4' };
-        } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
-          options = { mimeType: 'audio/ogg' };
-        } else {
-          console.error("No suitable audio MIME type found for this device.");
-          alert("Recording format is not supported on this device/browser.");
-          return;
-        }
-        const mediaRecorder = new MediaRecorder(stream, options);
-        let audioChunks = [];
-        mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunks, { mimeType: options.mimeType });
-          const audioUrl = URL.createObjectURL(audioBlob);
-          const audioElement = document.getElementById(`${language}-audio`);
-
-          audioElement.src = audioUrl;
-          audioElement.style.display = 'block';
-
-          if (language === 'english') {
-            englishBlob = audioBlob;
-            document.getElementById("english-status").textContent = "Status: Recording saved";
-          } else {
-            hindiBlob = audioBlob;
-            document.getElementById("hindi-status").textContent = "Status: Recording saved";
-          }
-
-          // Enable save button if both recordings are available
-          if (englishBlob && hindiBlob) {
-            document.getElementById("save-recording").disabled = false;
-          }
-        };
-
+        const recorder = RecordRTC(stream, { type: 'audio', mimeType: 'audio/wav' });
+        
         if (language === 'english') {
-          englishRecorder = mediaRecorder;
+          englishRecorder = recorder;
           document.getElementById("english-status").textContent = "Status: Recording...";
           document.getElementById("stop-english").disabled = false;
           document.getElementById("start-english").disabled = true;
         } else {
-          hindiRecorder = mediaRecorder;
+          hindiRecorder = recorder;
           document.getElementById("hindi-status").textContent = "Status: Recording...";
           document.getElementById("stop-hindi").disabled = false;
           document.getElementById("start-hindi").disabled = true;
         }
 
-        // Automatically stop after 10 seconds
-        mediaRecorder.start();
-        setTimeout(() => {
-          if (mediaRecorder.state === "recording") mediaRecorder.stop();
-        }, MAX_RECORDING_TIME);
+        recorder.startRecording();
+
+        // Stop recording after 10 seconds
+        setTimeout(() => stopRecording(language), MAX_RECORDING_TIME);
       }).catch(error => console.error(`Recording error for ${language}:`, error));
     }
 
     function stopRecording(language) {
-      if (language === 'english' && englishRecorder && englishRecorder.state === "recording") {
-        englishRecorder.stop();
+      let recorder, audioElement, statusElement;
+      if (language === 'english') {
+        recorder = englishRecorder;
+        audioElement = document.getElementById("english-audio");
+        statusElement = document.getElementById("english-status");
         document.getElementById("stop-english").disabled = true;
         document.getElementById("start-english").disabled = false;
-      } else if (language === 'hindi' && hindiRecorder && hindiRecorder.state === "recording") {
-        hindiRecorder.stop();
+      } else {
+        recorder = hindiRecorder;
+        audioElement = document.getElementById("hindi-audio");
+        statusElement = document.getElementById("hindi-status");
         document.getElementById("stop-hindi").disabled = true;
         document.getElementById("start-hindi").disabled = false;
       }
+
+      recorder.stopRecording(() => {
+        const blob = recorder.getBlob();
+        const audioUrl = URL.createObjectURL(blob);
+        audioElement.src = audioUrl;
+        audioElement.style.display = 'block';
+        statusElement.textContent = "Status: Recording saved";
+
+        if (language === 'english') {
+          englishBlob = blob;
+        } else {
+          hindiBlob = blob;
+        }
+
+        if (englishBlob && hindiBlob) {
+          document.getElementById("save-recording").disabled = false;
+        }
+      });
     }
 
     async function saveRecording() {
