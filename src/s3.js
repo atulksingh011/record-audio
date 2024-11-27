@@ -2,7 +2,6 @@ const { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsV2Command } = r
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const fs = require('fs');
 const path = require('path');
-const CONSTANTS = require("./constants");
 const { getDbFilePath } = require("./utils");
 
 const dataDirPath = getDbFilePath();

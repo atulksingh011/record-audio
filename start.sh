@@ -17,6 +17,7 @@ docker container run \
     -v $(pwd)/.env:/app/.env \
     -v $(pwd)/public:/app/public \
     -v $(pwd)/src:/app/src \
+    -v $(pwd)/export:/app/export \
     -v $(pwd)/package.json:/app/package.json \
     -v $(pwd)/nodemon.json:/app/nodemon.json \
     -v $(pwd)/namesToRecord.json:/app/namesToRecord.json \

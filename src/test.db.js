@@ -3,8 +3,9 @@ const Datastore = require("nedb");
 const path = require("path");
 
 // Adjust the path to your db file
-const dbFilePath = path.join(__dirname, "../", "data/users.db");
-const db = new Datastore({ filename: dbFilePath, autoload: true });
+const usersDBFilePath = path.join(__dirname, "../", "data/users.db");
+const recordDBFilePath = path.join(__dirname, "../", "data/record.db");
+const db = new Datastore({ filename: recordDBFilePath, autoload: true });
 
 // db.insert(
 //   {
@@ -30,12 +31,13 @@ const db = new Datastore({ filename: dbFilePath, autoload: true });
 // });
 
 // Fetch all records
-db.find({}, (err, docs) => {
-  if (err) {
-    console.error("Error fetching records:", err);
-    return;
-  }
-  console.log("Records:", docs);
-});
-
+db.find({})
+  .limit(5)
+  .exec((err, docs) => {
+    if (err) {
+      console.error("Error fetching records:", err);
+      return;
+    }
+    console.log("First 5 Records:", docs);
+  });
 
