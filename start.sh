@@ -8,6 +8,8 @@ else
     ENV_FILE_OPTION=""
 fi
 
+mkdir export
+
 docker container run \
     -d \
     --rm \
