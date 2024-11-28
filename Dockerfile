@@ -1,6 +1,9 @@
 # Use an official Node.js runtime as the base image
 FROM node:18.20.4-alpine3.20
 
+# Install FFmpeg
+RUN apk add --no-cache ffmpeg
+
 # Create app directory
 WORKDIR /app
 
